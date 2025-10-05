@@ -1,0 +1,162 @@
+#trigger:
+#- '*'
+#
+#pool:
+#  name: Default
+#
+#resources:
+#  - repo: self
+#
+#variables:
+#  dotnetVersion: '8.x'
+#  Registry: '$(azcontainerRegistry)'
+#  repository: '$(azrepository)'
+#  userName: '$(azuser)'
+#  userPassword: $(azpass)
+#  appname: '$(azcontainerappname)'
+#  sub: '$(azsub)'
+#
+#
+#stages:
+#- stage: Build
+#  displayName: 'Build Application .NET'
+#  jobs:
+#    - job: Build
+#      displayName: 'Build Job'
+#      pool:
+#        name: Default
+#      steps:
+#        - task: UseDotNet@2
+#          displayName: 'Use .NET SDK $(dotnetVersion)'
+#          inputs:
+#            packageType: 'sdk'
+#            version: '$(dotnetVersion)'
+#
+#        - task: DotNetCoreCLI@2
+#          displayName: 'Restore project'
+#          inputs:
+#            command: 'restore'
+#            projects: '**/*.csproj'
+#
+#        - task: DotNetCoreCLI@2
+#          displayName: 'Build Project'
+#          inputs:
+#            command: 'build'
+#            projects: '**/*.csproj'
+#            arguments: '--no-restore --configuration $(buildConfiguration)'
+#        - task: DotNetCoreCLI@2
+#          displayName: 'Test project'
+#          inputs:
+#            command: 'test'
+#            projects: '**/*.csproj'
+#            arguments: '--no-restore --configuration $(buildConfiguration)'
+#       
+#- stage: Development
+#  displayName: 'Deploy to Development'
+#  dependsOn: Build
+#  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/qa-'))
+#  jobs:
+#    - deployment: Deploy
+#      displayName: 'Deploy in Development'
+#      environment: development
+#    - job: 
+#      steps: 
+#        - powershell: |
+#            $branch = "$(Build.SourceBranchName)".ToLower()
+#            $version = $branch.Replace("qa-", "")
+#            Write-Host "##vso[task.setvariable variable=dockerTag]qa-$version-$(Build.BuildId)"
+#          displayName: 'Obter tag para deploy em Development'
+#        
+#        - task: Docker@2
+#          inputs:
+#            containerRegistry: $(Registry)
+#            repository: $(azrepository)
+#            command: 'buildAndPush'
+#            Dockerfile: '**/Dockerfile'
+#            tags: $(dockerTag)
+#
+#        - task: AzureContainerApps@1
+#          inputs:
+#            appSourcePath: '.'
+#            azureSubscription: ''
+#            Name: ''
+#            Username: ''
+#            Password: ''
+#            imageToDeploy: ''
+#            containerAppName: 'aca-api-fiap'
+#            resourceGroup: ''
+#            targetPort: 80
+#
+#        
+#
+#- stage: Staging
+#  displayName: 'Deploy to Homolog'
+#  dependsOn: Build
+#  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/stage-'))
+#  jobs:
+#    - deployment: Deploy
+#      displayName: 'Deploy in Homolog'
+#      environment: staging
+#    - job:
+#      steps:
+#        - powershell: |
+#            $branch = "$(Build.SourceBranchName)".ToLower()
+#            $version = $branch.Replace("stage-", "")
+#            Write-Host "##vso[task.setvariable variable=dockerTag]stage-$version-$(Build.BuildId)"
+#          displayName: 'Obter tag para deploy em Staging'
+#        - task: Docker@2
+#          inputs:
+#            containerRegistry: $(Registry)
+#            repository: $(azrepository)
+#            command: 'buildAndPush'
+#            Dockerfile: '**/Dockerfile'
+#            tags: $(dockerTag)
+#
+#        - task: AzureContainerApps@1
+#          inputs:
+#            appSourcePath: '.'
+#            azureSubscription: ''
+#            Name: ''
+#            Username: ''
+#            Password: ''
+#            imageToDeploy: ''
+#            containerAppName: 'aca-api-fiap'
+#            resourceGroup: ''
+#            targetPort: 80
+#
+#- stage: Production
+#  displayName: 'Deploy to Production'
+#  dependsOn: Build
+#  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release-'))
+#  jobs:
+#    - deployment: Deploy
+#      displayName: 'Deploy in Production'
+#      environment: staging
+#    
+#    - job: 
+#      steps:
+#        - powershell: |
+#            $branch = "$(Build.SourceBranchName)".ToLower()
+#            $version = $branch.Replace("release-", "")
+#            Write-Host "##vso[task.setvariable variable=dockerTag]$version-$(Build.BuildId)-release"
+#          displayName: 'Obter tag para deploy em Producao'
+#
+#        - task: Docker@2
+#          inputs:
+#            containerRegistry: $(Registry)
+#            repository: $(azrepository)
+#            command: 'buildAndPush'
+#            Dockerfile: '**/Dockerfile'
+#            tags: $(dockerTag)
+#
+#        - task: AzureContainerApps@1
+#          inputs:
+#            appSourcePath: '.'
+#            azureSubscription: ''
+#            Name: ''
+#            Username: ''
+#            Password: ''
+#            imageToDeploy: ''
+#            containerAppName: ''
+#            resourceGroup: ''
+#            targetPort: 80
