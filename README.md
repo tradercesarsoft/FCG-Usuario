@@ -109,7 +109,7 @@ FCG/
 │
 └── 📁 FCG.Tests/                  # 🌐 Testes da Solução
     └── 📁 Unitarios/              # 🔧 Testes Unitários
-    └── 📁 Integracao/             # 🔧 Testes de Integração
+    
 
 
 ```
