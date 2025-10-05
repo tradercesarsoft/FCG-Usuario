@@ -145,8 +145,8 @@ cd fcg
   },
   "JwtSettings": {
     "SecretKey": "sua-chave-secreta-super-segura-aqui",
-    "Issuer": "FCG.Api",
-    "Audience": "FCG.Client",
+    "Issuer": "FIAP",
+    "Audience": "FIAP-API-FASE-03",
     "ExpiryMinutes": 60
   }
 }
@@ -169,9 +169,8 @@ dotnet run --project FCG.Api
 ```
 
 ### **5. Acessar a Aplicação**
-- 🌐 **API Base**: `https://localhost:7001`
-- 📖 **Swagger Documentation**: `https://localhost:7001/swagger`
-- 💚 **Health Check**: `https://localhost:7001/health`
+- 🌐 **API Base**: `https://localhost:7087`
+- 📖 **Swagger Documentation**: `https://localhost:7087/swagger`
 
 ### **6 Login de Administrador
 - 🔐 Obter Email e senha nas configuracoes do projeto (Criação automática).
