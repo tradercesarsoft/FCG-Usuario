@@ -227,9 +227,10 @@ public class AuthController : ControllerBase
         var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, false);
         if (result.Succeeded)
         {
+            var token = await _tokenService.GenerateToken(user);
+
             await _mediator.PublicarEvento(new LoginUsuarioEvent(model.Email, "Usuário logado com sucesso", true));
 
-            var token = await _tokenService.GenerateToken(user);
             return Ok(new
             {
                 token,
