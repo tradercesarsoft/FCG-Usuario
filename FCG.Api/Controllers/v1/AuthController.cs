@@ -104,8 +104,6 @@ public class AuthController : ControllerBase
             return BadRequest(ModelState);
         }
 
-        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
-
         try
         {
             // Criação do usuário com validações de domínio
@@ -119,7 +117,6 @@ public class AuthController : ControllerBase
             if (emailExistente != null)
             {
                 await _mediator.PublicarEvento(new RegistroUsuarioEvent(model.Email, model.Nome, "E-mail já está em uso", false));
-                await transaction.CommitAsync();
                 return BadRequest(new { error = "E-mail já está em uso." });
             }
 
@@ -128,7 +125,6 @@ public class AuthController : ControllerBase
             if (!result.Succeeded)
             {
                 await _mediator.PublicarEvento(new RegistroUsuarioEvent(model.Email, model.Nome, "BadRequest", false));
-                await transaction.CommitAsync();
                 return BadRequest(result.Errors);
             }
 
@@ -137,24 +133,20 @@ public class AuthController : ControllerBase
             if (!roleResult.Succeeded)
             {
                 // Se falhar, a transação será revertida e o usuário NÃO será criado
-                await transaction.RollbackAsync();
                 await _mediator.PublicarEvento(new RegistroUsuarioEvent(model.Email, model.Nome, "Falha", false));
                 return BadRequest(roleResult.Errors);
             }
 
             await _mediator.PublicarEvento(new RegistroUsuarioEvent(model.Email, model.Nome, "Usuário Criado com sucesso", false));
-            await transaction.CommitAsync();
             return Ok(new { message = "Usuário criado com sucesso e associado à role Usuario!" });
         }
         catch (ArgumentException ex)
         {
-            await transaction.RollbackAsync();
             await _mediator.PublicarEvento(new RegistroUsuarioEvent(model.Email, model.Nome, "Falha com exceção", false));
             return BadRequest(new { error = ex.Message });
         }
         catch (Exception ex)
         {
-            await transaction.RollbackAsync();
             await _mediator.PublicarEvento(new RegistroUsuarioEvent(model.Email, model.Nome, "Falha com exceção", false));
             return StatusCode(500, "Ocorreu um erro interno ao registrar o usuário.");
         }
