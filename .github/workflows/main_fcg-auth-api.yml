@@ -27,7 +27,7 @@ jobs:
         run: dotnet build --configuration Release
 
       - name: dotnet publish
-        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp"
+        run: dotnet publish -c Release -o "${{env.DOTNET_ROOT}}/myapp" -p:CopyLocalLockFileAssemblies=true        
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
@@ -52,4 +52,5 @@ jobs:
           app-name: 'fcg-auth-api'
           slot-name: 'Production'
           package: .
+
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_A5905AF24EED47C0BCC1954837917C5D }}
